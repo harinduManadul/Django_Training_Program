@@ -269,6 +269,8 @@ db.sqlite3-journal
 # Environment files - NEVER commit these with secrets
 .env
 .env.local
+.env.docker
+.env.docker.local
 .env.*.local
 .env.production
 .env.staging
@@ -342,3 +344,15 @@ __pycache__/
 *.egg-info/
 dist/
 build/
+
+# Docker
+.dockerignore
+Dockerfile
+docker-compose*.yml
+.docker/
+dockerfile.prod
+.env.docker.prod
+
+# Docker volumes and caches
+.docker-volume/
+docker-compose.override.yml
