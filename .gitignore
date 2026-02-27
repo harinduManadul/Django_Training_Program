@@ -252,3 +252,93 @@ htmlcov/
 .venv/
 env/
 venv/
+
+# Database files - DO NOT COMMIT LOCAL DATABASES
+db.sqlite3
+db.sqlite3-journal
+*.db
+*.sqlite
+*.sqlite3
+*.backup
+*.sql
+
+# PostgreSQL-specific
+*.pgpass
+.pgpass
+
+# Environment files - NEVER commit these with secrets
+.env
+.env.local
+.env.*.local
+.env.production
+.env.staging
+
+# Django
+static/
+media/
+/static/
+/media/
+*.log
+
+# IDE and Editors
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+*.sublime-project
+*.sublime-workspace
+
+# OS-specific files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Testing and coverage
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.nox/
+nosetests.xml
+coverage.xml
+
+# Type checking
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# IDE and tools
+.ruff_cache/
+.pytype/
+.pyre/
+cython_debug/
+
+# Local history for various tools
+.vscode-history/
+.history/
+.node_repl_history
+
+# macOS
+.AppleDouble
+.LSOverride
+
+# Windows
+$RECYCLE.BIN/
+ehthumbs.db
+Desktop.ini
+
+# Python
+__pycache__/
+*.py[codz]
+*$py.class
+*.so
+.eggs/
+*.egg-info/
+dist/
+build/
