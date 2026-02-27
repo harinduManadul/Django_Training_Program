@@ -1,6 +1,11 @@
 from django.db import models
 from devices.models import Device
 from django.utils import timezone
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from django.db.models import ForeignKey
+    from devices.models import Device
 
 class DeviceTelemetry(models.Model):
     STATUS_CHOICES = [
@@ -9,7 +14,7 @@ class DeviceTelemetry(models.Model):
         ("DEGRADED", "Degraded"),
     ]
 
-    device = models.ForeignKey(Device, on_delete=models.CASCADE, related_name='device_telemetry')
+    device = models.ForeignKey(Device, on_delete=models.CASCADE, related_name='device_telemetry', null=True, blank=True)
     timestamp = models.DateTimeField(auto_now_add=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES)
     cpu = models.FloatField(default=0.0)
@@ -18,6 +23,7 @@ class DeviceTelemetry(models.Model):
 
     class Meta:
         ordering = ["-timestamp"]
+        db_table = 'device_telemetry'
 
     def __str__(self):
         return f"{self.device.name} - {self.status} at {self.timestamp}"
@@ -54,6 +60,9 @@ class AlertRule(models.Model):
 
     created_at = models.DateTimeField(auto_now_add=True)
     
+    class Meta:
+        db_table = 'alert_rule'
+
 class Alert(models.Model):
     class State(models.TextChoices):
         OPEN = "OPEN"

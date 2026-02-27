@@ -27,14 +27,6 @@ class Device(models.Model):
         null=True,
         blank=True
     )
-    
-    telemetry: models.ForeignKey = models.ForeignKey(
-        'telemerty.DeviceTelemetry',
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name="devices"
-    )
 
     # organization = models.ForeignKey(
     #     Organization,
