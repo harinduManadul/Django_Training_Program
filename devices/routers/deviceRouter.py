@@ -2,7 +2,7 @@ from ninja import Router
 
 from users.auth import JWTAuth, roles_allowed
 from ..models import Device
-from ..schemas import DeviceCreateSchema, DeviceOutSchema, DeviceOutSchemaMydevice
+from ..schemas import DeviceCreateSchema, DeviceOutSchema, DeviceOutSchemaMydevice, DeviceUpdateSchema
 from telemerty.models import DeviceTelemetry
 
 router = Router(auth=JWTAuth())
@@ -62,6 +62,27 @@ def get_device(request, device_id: str):
         return Device.objects.get(device_id=device_id)
     except Device.DoesNotExist:
         return {"error": "Device not found"}
+
+
+@router.put("/{device_id}/", response=DeviceOutSchema)
+@roles_allowed("admin", "user")
+def update_device(request, device_id: str, payload: DeviceUpdateSchema):
+    try:
+        device = Device.objects.get(device_id=device_id, owner=request.auth)
+    except Device.DoesNotExist:
+        return {"error": "Device not found"}
+    
+    if payload.name is not None:
+        device.name = payload.name
+    if payload.type is not None:
+        device.type = payload.type
+    if payload.location is not None:
+        device.location = payload.location
+    if payload.is_active is not None:
+        device.is_active = payload.is_active
+    
+    device.save()
+    return device
 
 
 @router.delete("/{device_id}/")

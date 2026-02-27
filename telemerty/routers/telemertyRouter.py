@@ -7,6 +7,7 @@ from ..models import Alert, AlertRule, DeviceTelemetry
 from ..schemas import AlertRuleSchema
 from ..schemas import DeviceTelemetryOutSchema, AlertSchema, AlertUpdateSchema
 from ..schemas import DeviceTelemetry as DeviceTelemetryCreateSchema
+from ..services import evaluate_rules
 from users.auth import JWTAuth, roles_allowed
 
 router = Router()
@@ -119,57 +120,3 @@ def update_alert_rule(request, rule_id: int, payload: AlertRuleSchema):
     rule.severity = payload.severity
     rule.save()
     return rule
-
-def evaluate_rules(device, telemetry):
-    from django.utils import timezone
-    from datetime import timedelta
-
-    rules = AlertRule.objects.filter(device=device, is_active=True)
-
-    for rule in rules:
-
-        triggered = False
-        message = ""
-
-        if rule.metric_type == AlertRule.MetricType.CPU:
-            value = telemetry.cpu
-            triggered = compare(value, rule.operator, rule.threshold)
-            message = f"CPU is {value}% (threshold {rule.operator} {rule.threshold})"
-
-        elif rule.metric_type == AlertRule.MetricType.TEMPERATURE:
-            value = telemetry.temperature
-            triggered = compare(value, rule.operator, rule.threshold)
-            message = f"Temperature is {value}°C"
-
-        elif rule.metric_type == AlertRule.MetricType.OFFLINE:
-            latest = device.device_telemetry.order_by("-timestamp").first()
-            if not latest or latest.timestamp < timezone.now() - timedelta(minutes=rule.offline_minutes):
-                triggered = True
-                message = f"Device offline for {rule.offline_minutes}+ minutes"
-                
-        elif rule.metric_type == AlertRule.MetricType.MEMORY:
-            value = telemetry.memory
-            triggered = compare(value, rule.operator, rule.threshold)
-            message = f"Memory usage is {value}% (threshold {rule.operator} {rule.threshold})"
-
-        if triggered:
-            Alert.objects.create(
-                rule=rule,
-                device=device,
-                message=message,
-                severity=rule.severity,
-            )
-
-
-def compare(value, operator, threshold):
-    if operator == ">":
-        return value > threshold
-    if operator == "<":
-        return value < threshold
-    if operator == ">=":
-        return value >= threshold
-    if operator == "<=":
-        return value <= threshold
-    if operator == "=":
-        return value == threshold
-    return False

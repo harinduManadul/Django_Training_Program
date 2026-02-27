@@ -2,6 +2,7 @@ from ninja import Schema
 from datetime import datetime
 from typing import Optional
 from uuid import UUID
+from pydantic import Field
 
 class DeviceSchema(Schema):
     id: int
@@ -13,9 +14,9 @@ class DeviceSchema(Schema):
 
 class DeviceTelemetry(Schema):
     status: str
-    cpu: float
-    memory: float
-    temperature: Optional[float] = None
+    cpu: float = Field(..., ge=0, le=100, description="CPU usage percentage (0-100)")
+    memory: float = Field(..., ge=0, le=100, description="Memory usage percentage (0-100)")
+    temperature: Optional[float] = Field(None, description="Temperature in Celsius (optional)")
 
 class DeviceTelemetryOutSchema(Schema):
     id: int

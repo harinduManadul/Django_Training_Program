@@ -215,6 +215,40 @@ __marimo__/
 # Streamlit
 .streamlit/secrets.toml
 
+# Django-specific
+static/
+media/
+.env.local
+.env.*.local
 
-#just files
-justfile
+# IDE and Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+*.sublime-project
+*.sublime-workspace
+
+# OS-specific
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+
+# Project-specific
+*.log
+*.pot
+.mypy_cache/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Virtual environments (local development)
+.venv/
+env/
+venv/
