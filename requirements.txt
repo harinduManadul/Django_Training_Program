@@ -6,6 +6,7 @@ django-extensions==4.1
 django-ninja==1.5.3
 ecdsa==0.19.1
 passlib==1.7.4
+psycopg2-binary==2.9.9
 pyasn1==0.6.2
 pydantic==2.12.5
 pydantic_core==2.41.5
