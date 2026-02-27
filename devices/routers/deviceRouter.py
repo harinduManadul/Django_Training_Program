@@ -50,9 +50,8 @@ def get_my_devices(request):
     
     # Update each device's state to the latest telemetry
     for device in devices:
-        latest_telemetry = device.telemetry.first()  # first() gets the latest due to ordering
-        if latest_telemetry:
-            device.state = latest_telemetry
+        if device.telemetry:
+            device.state = device.telemetry
     
     return devices
 

@@ -4,6 +4,7 @@ from ninja import Router
 from django.shortcuts import get_object_or_404
 from devices.models import Device
 from ..models import Alert, AlertRule, DeviceTelemetry
+from ..schemas import AlertRuleSchema
 from ..schemas import DeviceTelemetryOutSchema, AlertSchema, AlertUpdateSchema
 from ..schemas import DeviceTelemetry as DeviceTelemetryCreateSchema
 from users.auth import JWTAuth, roles_allowed
@@ -77,7 +78,47 @@ def update_alert(request, alert_id: int, payload: AlertUpdateSchema):
     return alert
 
 
-# Alert evaluation logic (can be called after saving new telemetry)
+@router.post("/evaluate-rules/{device_id}/", auth=JWTAuth())
+def evaluate_device_rules(request, device_id: int, payload: AlertRuleSchema):
+    device = get_object_or_404(Device, id=device_id, owner=request.auth)
+    rule = AlertRule.objects.create(
+        device=device,
+        metric_type=payload.metric_type,
+        operator=payload.operator,
+        threshold=payload.threshold,
+        offline_minutes=payload.offline_minutes,
+        severity=payload.severity
+    )
+    return rule
+
+@router.get("/alert-rules/{device_id}/", response=list[AlertRuleSchema], auth=JWTAuth())
+@roles_allowed("admin", "user")
+def get_alert_rules(request, device_id: int):
+    user = request.auth
+    device = get_object_or_404(Device, id=device_id, owner=user)
+    rules = AlertRule.objects.filter(device=device, is_active=True)
+    return rules
+
+@router.delete("/alert-rules/{rule_id}/", auth=JWTAuth())
+@roles_allowed("admin", "user")
+def delete_alert_rule(request, rule_id: int):
+    user = request.auth
+    rule = get_object_or_404(AlertRule, id=rule_id, device__owner=user)
+    rule.delete()
+    return {"message": "Alert rule deleted successfully"}
+
+@router.put("/alert-rules/{rule_id}/", response=AlertRuleSchema, auth=JWTAuth())
+@roles_allowed("admin", "user")
+def update_alert_rule(request, rule_id: int, payload: AlertRuleSchema):
+    user = request.auth
+    rule = get_object_or_404(AlertRule, id=rule_id, device__owner=user)
+    rule.metric_type = payload.metric_type
+    rule.operator = payload.operator
+    rule.threshold = payload.threshold
+    rule.offline_minutes = payload.offline_minutes
+    rule.severity = payload.severity
+    rule.save()
+    return rule
 
 def evaluate_rules(device, telemetry):
     from django.utils import timezone
@@ -101,7 +142,7 @@ def evaluate_rules(device, telemetry):
             message = f"Temperature is {value}°C"
 
         elif rule.metric_type == AlertRule.MetricType.OFFLINE:
-            latest = device.telemetry.order_by("-timestamp").first()
+            latest = device.device_telemetry.order_by("-timestamp").first()
             if not latest or latest.timestamp < timezone.now() - timedelta(minutes=rule.offline_minutes):
                 triggered = True
                 message = f"Device offline for {rule.offline_minutes}+ minutes"

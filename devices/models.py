@@ -28,6 +28,14 @@ class Device(models.Model):
         blank=True
     )
 
+    telemetry: models.OneToOneField = models.OneToOneField(
+        'telemerty.DeviceTelemetry',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='device_one_to_one'
+    )
+
     # organization = models.ForeignKey(
     #     Organization,
     #     on_delete=models.SET_NULL,
