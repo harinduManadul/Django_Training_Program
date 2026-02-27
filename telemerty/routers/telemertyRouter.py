@@ -71,7 +71,7 @@ def list_alerts(request, state: Optional[str] = None, device_id: Optional[int] =
     return qs
 
 
-@router.patch("/alerts/{alert_id}", response=AlertSchema)
+@router.patch("/alerts/{alert_id}", response=AlertSchema, auth=JWTAuth())
 def update_alert(request, alert_id: int, payload: AlertUpdateSchema):
     alert = get_object_or_404(Alert, id=alert_id)
     alert.state = payload.state
