@@ -13,10 +13,10 @@ from users.auth import JWTAuth, roles_allowed
 router = Router()
 
 @router.post("/device/{device_id}/status/", response=DeviceTelemetryOutSchema)
-def device_status(request, device_id: int, payload: Optional[DeviceTelemetryCreateSchema] = None):
+def device_status(request, device_id: str, payload: Optional[DeviceTelemetryCreateSchema] = None):
 
     limit: int = 50
-    device = get_object_or_404(Device, id=device_id)
+    device = get_object_or_404(Device, device_id=device_id)
     
     if payload:
         telemetry = DeviceTelemetry.objects.create(
