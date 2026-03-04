@@ -2,14 +2,17 @@ from ninja import Router
 
 from users.auth import JWTAuth, roles_allowed
 from ..models import Device
-from ..schemas import DeviceCreateSchema, DeviceOutSchema, DeviceOutSchemaMydevice, DeviceUpdateSchema
+from ..schemas import DeviceCreateSchema, DeviceOutSchema, DeviceOutSchemaMydevice, DeviceUpdateSchema, ErrorSchema
 from telemerty.models import DeviceTelemetry
 
 router = Router(auth=JWTAuth())
 
 print(f'Device router initialized with JWTAuth: {router.auth.__class__.__name__}')
 
-@router.post("/creat", response=DeviceOutSchema)
+@router.post("/creat", response={
+    200: DeviceOutSchema,
+    401: ErrorSchema
+})
 @roles_allowed("admin", "user")
 def create_device(request, payload: DeviceCreateSchema):
     auth_header = request.headers.get('Authorization', '')
@@ -37,34 +40,45 @@ def create_device(request, payload: DeviceCreateSchema):
     device.save()
     return device
 
-@router.get("/all/", response=list[DeviceOutSchema])
+@router.get("/all/", response={
+    200: list[DeviceOutSchema],
+    401: ErrorSchema
+})
 @roles_allowed("admin")
 def list_devices(request):
     return Device.objects.all()
 
-@router.get("/my-devices/", response=list[DeviceOutSchemaMydevice])
+@router.get("/my-devices/", response={
+    200: list[DeviceOutSchemaMydevice],
+    401: ErrorSchema
+})
 @roles_allowed("admin", "user")
 def get_my_devices(request):
     user = request.auth
     devices = user.device_ids.all()
     
-    # Update each device's state to the latest telemetry
-    for device in devices:
-        if device.telemetry:
-            device.state = device.telemetry
-    
     return devices
 
-@router.get("/{device_id}/", response=DeviceOutSchemaMydevice)
+@router.get("/{device_id}/", response={
+    200: DeviceOutSchema,
+    404: ErrorSchema
+})
 @roles_allowed("admin", "user")
 def get_device(request, device_id: str):
     try:
-        return Device.objects.get(device_id=device_id)
+        device = Device.objects.get(device_id=device_id)
+        # Get latest telemetry for the device
+        latest_telemetry = DeviceTelemetry.objects.filter(device=device).order_by('-timestamp').first()
+        device.telemetry = latest_telemetry
+        return device
     except Device.DoesNotExist:
         return {"error": "Device not found"}
 
 
-@router.put("/{device_id}/", response=DeviceOutSchema)
+@router.put("/{device_id}/", response={
+    200: DeviceOutSchema,
+    404: ErrorSchema
+})
 @roles_allowed("admin", "user")
 def update_device(request, device_id: str, payload: DeviceUpdateSchema):
     try:

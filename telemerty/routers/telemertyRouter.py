@@ -4,7 +4,7 @@ from ninja import Router
 from django.shortcuts import get_object_or_404
 from devices.models import Device
 from ..models import Alert, AlertRule, DeviceTelemetry
-from ..schemas import AlertRuleSchema
+from ..schemas import AlertRuleSchema, ErrorSchema
 from ..schemas import DeviceTelemetryOutSchema, AlertSchema, AlertUpdateSchema
 from ..schemas import DeviceTelemetry as DeviceTelemetryCreateSchema
 from ..services import evaluate_rules
@@ -12,7 +12,11 @@ from users.auth import JWTAuth, roles_allowed
 
 router = Router()
 
-@router.post("/device/{device_id}/status/", response=DeviceTelemetryOutSchema)
+@router.post("/device/{device_id}/status/", response={
+    200: DeviceTelemetryOutSchema,
+    404: ErrorSchema,
+    401: ErrorSchema
+})
 def device_status(request, device_id: str, payload: Optional[DeviceTelemetryCreateSchema] = None):
 
     limit: int = 50
@@ -40,7 +44,10 @@ def device_status(request, device_id: str, payload: Optional[DeviceTelemetryCrea
     telemetry_data = DeviceTelemetry.objects.filter(device=device).order_by('-timestamp')[:limit]
     return telemetry_data[0] if telemetry_data else None
 
-@router.get("/device/{device_id}/status/", response=list[DeviceTelemetryOutSchema], auth=JWTAuth())
+@router.get("/device/{device_id}/status/", response={
+    200: list[DeviceTelemetryOutSchema],
+    401: ErrorSchema
+}, auth=JWTAuth())
 @roles_allowed("admin", "user")
 def get_device_status(request, device_id: int):
     limit: int = 50
@@ -50,7 +57,10 @@ def get_device_status(request, device_id: int):
     telemetry_data = DeviceTelemetry.objects.filter(device=device).order_by('-timestamp')[:limit]
     return telemetry_data
 
-@router.get("/device/{device_id}/status/latest/", response=DeviceTelemetryOutSchema, auth=JWTAuth())
+@router.get("/device/{device_id}/status/latest/", response={
+    200: DeviceTelemetryOutSchema,
+    401: ErrorSchema
+}, auth=JWTAuth())
 @roles_allowed("admin", "user")
 def get_latest_device_status(request, device_id: int):
     user = request.auth
@@ -58,7 +68,10 @@ def get_latest_device_status(request, device_id: int):
     latest_telemetry = DeviceTelemetry.objects.filter(device=device).order_by('-timestamp').first()
     return latest_telemetry
 
-@router.get("/alerts", response=list[AlertSchema])
+@router.get("/alerts", response={
+    200: list[AlertSchema],
+    401: ErrorSchema
+}, auth=JWTAuth())
 def list_alerts(request, state: Optional[str] = None, device_id: Optional[int] = None):
     qs = Alert.objects.all()
 
@@ -71,7 +84,11 @@ def list_alerts(request, state: Optional[str] = None, device_id: Optional[int] =
     return qs
 
 
-@router.patch("/alerts/{alert_id}", response=AlertSchema, auth=JWTAuth())
+@router.patch("/alerts/{alert_id}", response={
+    200: AlertSchema,
+    404: ErrorSchema,
+    401: ErrorSchema
+}, auth=JWTAuth())
 def update_alert(request, alert_id: int, payload: AlertUpdateSchema):
     alert = get_object_or_404(Alert, id=alert_id)
     alert.state = payload.state
@@ -79,7 +96,10 @@ def update_alert(request, alert_id: int, payload: AlertUpdateSchema):
     return alert
 
 
-@router.post("/evaluate-rules/{device_id}/", auth=JWTAuth())
+@router.post("/evaluate-rules/{device_id}/", response={
+    200: AlertRuleSchema,
+    401: ErrorSchema
+}, auth=JWTAuth())
 def evaluate_device_rules(request, device_id: int, payload: AlertRuleSchema):
     device = get_object_or_404(Device, id=device_id, owner=request.auth)
     rule = AlertRule.objects.create(
@@ -92,7 +112,10 @@ def evaluate_device_rules(request, device_id: int, payload: AlertRuleSchema):
     )
     return rule
 
-@router.get("/alert-rules/{device_id}/", response=list[AlertRuleSchema], auth=JWTAuth())
+@router.get("/alert-rules/{device_id}/", response={
+    200: list[AlertRuleSchema],
+    401: ErrorSchema
+}, auth=JWTAuth())
 @roles_allowed("admin", "user")
 def get_alert_rules(request, device_id: int):
     user = request.auth
@@ -108,7 +131,11 @@ def delete_alert_rule(request, rule_id: int):
     rule.delete()
     return {"message": "Alert rule deleted successfully"}
 
-@router.put("/alert-rules/{rule_id}/", response=AlertRuleSchema, auth=JWTAuth())
+@router.put("/alert-rules/{rule_id}/", response={
+    200: AlertRuleSchema,
+    404: ErrorSchema,
+    401: ErrorSchema
+}, auth=JWTAuth())
 @roles_allowed("admin", "user")
 def update_alert_rule(request, rule_id: int, payload: AlertRuleSchema):
     user = request.auth

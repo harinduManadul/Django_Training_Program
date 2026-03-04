@@ -20,7 +20,7 @@ class DeviceTelemetry(Schema):
 
 class DeviceTelemetryOutSchema(Schema):
     id: int
-    device: DeviceSchema
+    #device: DeviceSchema
     timestamp: datetime
     status: str
     cpu: float
@@ -49,3 +49,6 @@ class AlertSchema(Schema):
 
 class AlertUpdateSchema(Schema):
     state: str
+
+class ErrorSchema(Schema):
+    error: str

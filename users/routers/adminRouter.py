@@ -61,7 +61,10 @@ def create_user(request, data: UserCreateSchema):
     )
     return 201, user
 
-@router.get("/all", response=list[UserSchema], auth = JWTAuth())
+@router.get("/all", response={
+    200: list[UserSchema],
+    401: ErrorSchema
+}, auth = JWTAuth())
 @roles_allowed('admin')
 def list_all_users(request):
     return User.objects.all()  

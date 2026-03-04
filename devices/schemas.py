@@ -44,3 +44,6 @@ class DeviceOutSchemaMydevice(Schema):
     is_active: bool
     created_at: datetime
     state: Optional[DeviceTelemetryOutSchema] = None
+
+class ErrorSchema(Schema):
+    error: str
