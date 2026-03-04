@@ -49,10 +49,10 @@ def device_status(request, device_id: str, payload: Optional[DeviceTelemetryCrea
     401: ErrorSchema
 }, auth=JWTAuth())
 @roles_allowed("admin", "user")
-def get_device_status(request, device_id: int):
+def get_device_status(request, device_id: str):
     limit: int = 50
     user = request.auth
-    device = get_object_or_404(Device, id=device_id, owner=user)
+    device = get_object_or_404(Device, device_id=device_id, owner=user)
     
     telemetry_data = DeviceTelemetry.objects.filter(device=device).order_by('-timestamp')[:limit]
     return telemetry_data
@@ -62,9 +62,9 @@ def get_device_status(request, device_id: int):
     401: ErrorSchema
 }, auth=JWTAuth())
 @roles_allowed("admin", "user")
-def get_latest_device_status(request, device_id: int):
+def get_latest_device_status(request, device_id: str):
     user = request.auth
-    device = get_object_or_404(Device, id=device_id, owner=user)
+    device = get_object_or_404(Device, device_id=device_id, owner=user)
     latest_telemetry = DeviceTelemetry.objects.filter(device=device).order_by('-timestamp').first()
     return latest_telemetry
 
@@ -72,14 +72,15 @@ def get_latest_device_status(request, device_id: int):
     200: list[AlertSchema],
     401: ErrorSchema
 }, auth=JWTAuth())
-def list_alerts(request, state: Optional[str] = None, device_id: Optional[int] = None):
+@roles_allowed("admin")
+def list_alerts(request, state: Optional[str] = None, device_id: Optional[str] = None):
     qs = Alert.objects.all()
 
     if state:
         qs = qs.filter(state=state)
 
     if device_id:
-        qs = qs.filter(device_id=device_id)
+        qs = qs.filter(device__device_id=device_id)
 
     return qs
 
@@ -100,8 +101,8 @@ def update_alert(request, alert_id: int, payload: AlertUpdateSchema):
     200: AlertRuleSchema,
     401: ErrorSchema
 }, auth=JWTAuth())
-def evaluate_device_rules(request, device_id: int, payload: AlertRuleSchema):
-    device = get_object_or_404(Device, id=device_id, owner=request.auth)
+def evaluate_device_rules(request, device_id: str, payload: AlertRuleSchema):
+    device = get_object_or_404(Device, device_id=device_id, owner=request.auth)
     rule = AlertRule.objects.create(
         device=device,
         metric_type=payload.metric_type,
@@ -117,9 +118,9 @@ def evaluate_device_rules(request, device_id: int, payload: AlertRuleSchema):
     401: ErrorSchema
 }, auth=JWTAuth())
 @roles_allowed("admin", "user")
-def get_alert_rules(request, device_id: int):
+def get_alert_rules(request, device_id: str):
     user = request.auth
-    device = get_object_or_404(Device, id=device_id, owner=user)
+    device = get_object_or_404(Device, device_id=device_id, owner=user)
     rules = AlertRule.objects.filter(device=device, is_active=True)
     return rules
 
