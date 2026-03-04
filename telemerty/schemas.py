@@ -29,7 +29,7 @@ class DeviceTelemetryOutSchema(Schema):
     
 class AlertRuleSchema(Schema):
     id: int
-    device: DeviceSchema
+    #device: DeviceSchema
     metric_type: str
     operator: Optional[str] = None
     threshold: Optional[float] = None
